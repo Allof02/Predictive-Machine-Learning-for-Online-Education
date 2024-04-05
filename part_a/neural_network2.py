@@ -173,14 +173,16 @@ def main():
 
     # hyperparam sets (ignore lambda for now)
     hp_grid = {
-        'k': [10, 50, 100, 200, 500],
-        'lr': [0.001, 0.01, 0.1],
-        'num_epoch': [50, 100, 200, 400],
+        'k': [10],
+        'lr': [0.0073],
+        'num_epoch': [120],
         'lamb': [0],
     }
     num_questions = train_matrix.shape[1]
-    best_perf = float('inf')
+    best_perf = -float('inf')
     best_hp = None
+    best_graph = None
+    best_model = None
 
     # get all hyperparameter combinations (k, lr, num_epoch)
     keys, values = zip(*hp_grid.items())
@@ -188,24 +190,22 @@ def main():
 
     # part (b) train autoencoder and tune hyperparams
     for hp in hp_combinations:
+        print(f"==== trying PARAMS: {hp} ====")
         model = AutoEncoder(num_questions, hp['k']).to(device)
-        train(model, hp['lr'], hp['lamb'], train_matrix, zero_train_matrix,
+        graph = train(model, hp['lr'], hp['lamb'], train_matrix, zero_train_matrix,
               valid_data, hp['num_epoch'])
         perf = evaluate(model, zero_train_matrix, valid_data)
         if perf > best_perf:
             best_perf = perf
             best_hp = hp
+            best_graph = graph
+            best_model = model
         print(f"perf: {perf}, params: {hp}")
     print(f"best accuracy {best_perf} with params {best_hp}")
+    # best params: k: 10, lr: 0.01, num_epoch: 100, perf: 0.689
 
     # part (c) plot training and validation objectives with best hp
-    model = AutoEncoder(num_questions, best_hp['k']).to(device)
-    train(model, best_hp['lr'], best_hp['lamb'], train_matrix,
-          zero_train_matrix,
-          valid_data, best_hp['num_epoch'])
-    train_loss, valid_acc = train(model, best_hp['lr'], best_hp['lamb'],
-                                  train_matrix, zero_train_matrix,
-                                  valid_data, best_hp['num_epoch'])
+    train_loss, valid_acc = best_graph
 
     # plotting training loss wrt epoch
     epochs = range(1, best_hp['num_epoch'] + 1)
@@ -213,6 +213,8 @@ def main():
     plt.title('Training Loss by Epoch')
     plt.xlabel('Epoch')
     plt.ylabel('Training Loss')
+    plt.legend()
+    plt.show()
 
     # plotting validation accuracy wrt epoch
     epochs = range(1, best_hp['num_epoch'] + 1)
@@ -220,21 +222,22 @@ def main():
     plt.title('Validation Accuracy by Epoch')
     plt.xlabel('Epoch')
     plt.ylabel('Validation Accuracy')
+    plt.legend()
+    plt.show()
 
     # part (c): compute test accuracy
-    model = AutoEncoder(num_questions, best_hp['k']).to(device)
-    train(model, best_hp['lr'], best_hp['lamb'], train_matrix,
-          zero_train_matrix,
-          valid_data, best_hp['num_epoch'])
-    test_perf = evaluate(model, zero_train_matrix, test_data)
+    test_perf = evaluate(best_model, zero_train_matrix, test_data)
     print(f"test accuracy {test_perf}")
 
     # part (d) evaluate model with lambda
-    lamb_set = [0.001, 0.01, 0.1, 1, 1.1, 1.2, 1.5]
+    lamb_set = [0.001, 0.01, 0.1, 1]
     new_hp = best_hp
-    best_lamb_perf = float('inf')
+    best_lamb_perf = -float('inf')
     best_lamb = None
+    best_lamb_model = None
+    print(f"==== training with regularization ====")
     for lamb in lamb_set:
+        print(f"TRAINING lamb = {lamb}")
         new_hp['lamb'] = lamb
         model = AutoEncoder(num_questions, new_hp['k']).to(device)
         train(model, new_hp['lr'], new_hp['lamb'], train_matrix,
@@ -244,16 +247,13 @@ def main():
         if perf > best_lamb_perf:
             best_lamb_perf = perf
             best_lamb = lamb
+            best_lamb_model = model
         print(f"perf: {perf}, lambda: {lamb}")
     print(f"best accuracy: {best_lamb_perf} with lambda: {best_lamb}")
 
     # part (d): compute test accuracy with regularizer
     best_hp['lamb'] = best_lamb
-    model = AutoEncoder(num_questions, best_hp['k']).to(device)
-    train(model, best_hp['lr'], best_hp['lamb'], train_matrix,
-          zero_train_matrix,
-          valid_data, best_hp['num_epoch'])
-    test_perf = evaluate(model, zero_train_matrix, test_data)
+    test_perf = evaluate(best_lamb_model, zero_train_matrix, test_data)
     print(f"test accuracy {test_perf} with lambda: {best_lamb}")
 
 
