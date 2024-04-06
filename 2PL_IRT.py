@@ -184,9 +184,13 @@ def main():
     #####################################################################
     import matplotlib.pyplot as plt
 
-    iterations = 40
-    lr = 0.01
+    iterations = 45
+    lr = 0.005
 
+    # 0.01, 35 -> Validation accuracy: 0.707874682472481
+    # 0.005, 35 -> Validation accuracy: 0.7074513124470787
+    # 0.005, 40 -> Validation accuracy: 0.7075924357888794
+    # 0.005, 45 -> Test accuracy:  0.7056167090036692 Validation accuracy:  0.7082980524978831
 
     theta, beta, val_acc_lst, train_likelihood, val_likelihood, alpha, gamma = \
         irt(train_data, val_data, lr, iterations)
