@@ -11,8 +11,6 @@ import torch
 
 import matplotlib.pyplot as plt
 
-# error handling :  Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.
-# from chatgpt
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -72,11 +70,6 @@ class AutoEncoder(nn.Module):
         :param inputs: user vector.
         :return: user vector.
         """
-        #####################################################################
-        # TODO:                                                             #
-        # Implement the function as described in the docstring.             #
-        # Use sigmoid activations for f and g.                              #
-        #####################################################################
 
         # input->g->h->f
         # apply sigmoid to the linear function g with input as inputs, the output is h
@@ -85,9 +78,6 @@ class AutoEncoder(nn.Module):
         f = F.sigmoid(self.h(h))
 
         out = f
-        #####################################################################
-        #                       END OF YOUR CODE                            #
-        #####################################################################
         return out
 
 
